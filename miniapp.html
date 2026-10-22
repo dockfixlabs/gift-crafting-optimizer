@@ -109,6 +109,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 </style>
 </head>
 <body>
+<canvas id="liquidGlass" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;"></canvas>
 <div class="app">
   <header class="header">
     <div class="header-row">
@@ -453,5 +454,59 @@ function combinations(arr, k) { const result = []; function helper(start, combo)
 newScenario(null); applyLang();
 if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(() => {}); }
 </script>
+
+<script>
+// Liquid Glass WebGL Background (inspired by ybouane/liquidglass)
+(function() {
+  const canvas = document.getElementById('liquidGlass');
+  if (!canvas) return;
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) return;
+
+  function resize() {
+    canvas.width = window.innerWidth * devicePixelRatio;
+    canvas.height = window.innerHeight * devicePixelRatio;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const vs = "attribute vec2 p; void main(){ gl_Position = vec4(p,0.0,1.0); }";
+  const fs = "precision mediump float; uniform float t; uniform vec2 r; void main(){ vec2 uv = gl_FragCoord.xy / r; float n = sin(uv.x*6.0 + t*0.5)*0.5 + sin(uv.y*4.0 + t*0.3)*0.5; float glass = smoothstep(0.3, 0.7, n + sin(t*0.2)*0.2); vec3 c1 = vec3(0.04, 0.055, 0.102); vec3 c2 = vec3(0.07, 0.094, 0.165); vec3 c3 = vec3(0.357, 0.553, 0.937); vec3 col = mix(c1, c2, glass); col = mix(col, c3, glass*0.08); float light = sin(uv.x*3.0 + t*0.4)*sin(uv.y*2.0 + t*0.2)*0.05; col += light; gl_FragColor = vec4(col, 1.0); }";
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const a = gl.getAttribLocation(prog, 'p');
+  gl.enableVertexAttribArray(a);
+  gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+
+  const ut = gl.getUniformLocation(prog, 't');
+  const ur = gl.getUniformLocation(prog, 'r');
+
+  let start = Date.now();
+  function frame() {
+    const t = (Date.now() - start) / 1000;
+    gl.uniform1f(ut, t);
+    gl.uniform2f(ur, canvas.width, canvas.height);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+</script>
+
 </body>
 </html>
