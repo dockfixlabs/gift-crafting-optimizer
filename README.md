@@ -35,7 +35,7 @@ Option B — static Mini App (no backend):
 2. Create a bot via @BotFather, get token.
 3. Set env vars and run bot:
    set BOT_TOKEN=your_token_here
-   set MINIAPP_URL=https://your-username.github.io/your-repo/miniapp.html
+   set MINIAPP_URL=https://dockfixlabs.github.io/gift-crafting-optimizer/miniapp.html
    python bot.py
 4. Send /start to your bot, tap "Open Calculator".
 
