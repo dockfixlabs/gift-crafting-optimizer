@@ -1,409 +1,457 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Gift Crafting Optimizer</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<meta name="description" content="Telegram Star Gifts crafting probability calculator based on documented rules. No login, no trading.">
-<meta property="og:title" content="Gift Crafting Optimizer">
-<meta property="og:description" content="Compute crafting success and attribute persistence for Telegram Star Gifts.">
-<meta property="og:type" content="website">
-<meta name="theme-color" content="#0d1117">
+<link rel="manifest" href="manifest.json">
+<meta name="description" content="Telegram Star Gifts crafting probability calculator. Evidence-based. No hype.">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  :root { --bg: var(--tg-theme-bg-color, #0d1117); --card: var(--tg-theme-secondary-bg-color, #161b22); --text: var(--tg-theme-text-color, #e6edf3); --hint: var(--tg-theme-hint-color, #8b949e); --accent: var(--tg-theme-button-color, #4f8cff); --accent-text: var(--tg-theme-button-text-color, #ffffff); --border: #30363d; }
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
-  .container { max-width: 960px; margin: 0 auto; padding: 16px; }
-  header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-  h1 { margin: 0; font-size: 22px; }
-  .subtitle { color: var(--hint); font-size: 13px; }
-  .tabs { display: flex; gap: 6px; margin: 12px 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-  .tab { padding: 6px 12px; border-radius: 6px; cursor: pointer; background: transparent; color: var(--hint); border: 1px solid transparent; font-size: 13px; }
-  .tab.active { background: var(--card); color: var(--text); border-color: var(--border); }
-  .panel { display: none; }
-  .panel.active { display: block; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 12px 0; }
-  .warn { background: #2a1f0f; border: 1px solid #7a5a1f; color: #f0c070; padding: 10px 12px; border-radius: 8px; font-size: 13px; margin: 12px 0; }
-  label { display: block; font-size: 12px; color: var(--hint); margin: 8px 0 3px; }
-  input, textarea, select { width: 100%; padding: 8px 10px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; }
-  textarea { min-height: 64px; font-family: "SF Mono", Consolas, monospace; font-size: 12px; }
-  button { padding: 8px 16px; border: none; border-radius: 6px; background: var(--accent); color: var(--accent-text); cursor: pointer; font-size: 13px; font-weight: 600; }
-  button.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
-  button.danger { background: #8b2a2a; color: #fff; }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-  .input-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin: 8px 0; }
-  .result { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 10px; }
-  .prob-big { font-size: 28px; font-weight: 700; color: var(--accent); }
-  .stat { display: inline-block; margin-right: 16px; }
-  .stat .val { font-size: 18px; font-weight: 700; }
-  .stat .lbl { font-size: 11px; color: var(--hint); }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; }
-  th, td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; }
-  th { background: var(--card); }
-  .err { color: #ff6b6b; font-size: 12px; margin-top: 4px; }
-  .note { font-size: 11px; color: var(--hint); margin-top: 4px; }
-  .methodology h3 { margin: 12px 0 4px; font-size: 14px; }
-  .methodology code { background: var(--card); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-  .preset { display: inline-block; padding: 4px 10px; margin: 3px; border-radius: 6px; background: var(--card); border: 1px solid var(--border); cursor: pointer; font-size: 12px; }
-  .preset:hover { border-color: var(--accent); }
-  .scenario-card { border-left: 3px solid var(--accent); }
-  @media (max-width: 600px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+:root { --bg: var(--tg-theme-bg-color, #0a0e1a); --card: var(--tg-theme-secondary-bg-color, #12182a); --text: var(--tg-theme-text-color, #e8ecf4); --hint: var(--tg-theme-hint-color, #7a8599); --accent: var(--tg-theme-button-color, #5b8def); --accent-text: var(--tg-theme-button-text-color, #ffffff); --link: var(--tg-theme-link-color, #5b8def); --border: rgba(255,255,255,0.08); --glass: rgba(255,255,255,0.04); --glass-border: rgba(255,255,255,0.1); --success: #34d399; --danger: #f87171; --warning: #fbbf24; --radius: 14px; --radius-sm: 8px; --shadow: 0 4px 24px rgba(0,0,0,0.3); --transition: 0.25s cubic-bezier(0.4,0,0.2,1); --font: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif; --mono: SF Mono,Fira Code,Consolas,monospace; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; min-height: 100dvh; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+.app { max-width: 480px; margin: 0 auto; padding: 0 16px 80px; padding-top: env(safe-area-inset-top,0); padding-bottom: calc(80px + env(safe-area-inset-bottom,0)); }
+@media (min-width: 768px) { .app { max-width: 720px; } }
+.header { position: sticky; top: 0; z-index: 100; background: rgba(10,14,26,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 12px 0; margin: 0 -16px 16px; padding-left: 16px; padding-right: 16px; }
+.header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg,var(--accent),#8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 2px 12px rgba(91,141,239,0.3); }
+.logo-text h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; margin: 0; }
+.logo-text span { font-size: 11px; color: var(--hint); }
+.lang-toggle { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; color: var(--text); cursor: pointer; transition: var(--transition); }
+.lang-toggle:hover { border-color: var(--accent); }
+.nav { display: flex; gap: 4px; margin-bottom: 16px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 4px; }
+.nav-btn { flex: 1; padding: 8px 12px; border: none; background: transparent; color: var(--hint); font-size: 13px; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }
+.nav-btn.active { background: var(--accent); color: var(--accent-text); box-shadow: 0 2px 8px rgba(91,141,239,0.3); }
+.nav-btn:hover:not(.active) { color: var(--text); }
+.panel { display: none; animation: fadeIn 0.3s ease; }
+.panel.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.card { background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); }
+.card-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.warn { background: linear-gradient(135deg,rgba(251,191,36,0.1),rgba(251,191,36,0.05)); border: 1px solid rgba(251,191,36,0.3); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12px; color: var(--warning); margin-bottom: 16px; display: flex; gap: 8px; align-items: flex-start; }
+.warn-icon { flex-shrink: 0; font-size: 14px; }
+label { display: block; font-size: 11px; font-weight: 600; color: var(--hint); text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 4px; }
+input, textarea, select { width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.2); color: var(--text); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit; transition: var(--transition); }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,141,239,0.15); }
+textarea { min-height: 72px; font-family: var(--mono); font-size: 12px; resize: vertical; }
+.btn { padding: 10px 18px; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: linear-gradient(135deg,var(--accent),#8b5cf6); color: var(--accent-text); box-shadow: 0 2px 12px rgba(91,141,239,0.3); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(91,141,239,0.4); }
+.btn-primary:active { transform: translateY(0); }
+.btn-secondary { background: var(--glass); color: var(--text); border: 1px solid var(--glass-border); }
+.btn-secondary:hover { border-color: var(--accent); }
+.btn-danger { background: rgba(248,113,113,0.15); color: var(--danger); border: 1px solid rgba(248,113,113,0.3); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+@media (max-width: 480px) { .grid2,.grid3 { grid-template-columns: 1fr; } }
+.scenario { background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); padding: 16px; margin: 12px 0; transition: var(--transition); }
+.scenario:hover { border-left-color: #8b5cf6; }
+.scenario-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.scenario-title { font-weight: 700; font-size: 14px; }
+.input-block { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 10px; margin: 8px 0; }
+.input-label { font-size: 11px; color: var(--hint); margin-bottom: 6px; font-weight: 600; }
+.result { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 16px; margin: 12px 0; animation: slideUp 0.3s ease; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.prob-display { text-align: center; padding: 16px; background: linear-gradient(135deg,rgba(91,141,239,0.1),rgba(139,92,246,0.1)); border-radius: var(--radius-sm); margin: 12px 0; }
+.prob-value { font-size: 36px; font-weight: 800; background: linear-gradient(135deg,var(--accent),#8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.prob-label { font-size: 12px; color: var(--hint); margin-top: 4px; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(100px,1fr)); gap: 8px; margin: 12px 0; }
+.stat-box { background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+.stat-box .val { font-size: 18px; font-weight: 700; }
+.stat-box .lbl { font-size: 10px; color: var(--hint); text-transform: uppercase; letter-spacing: 0.5px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; border-radius: var(--radius-sm); overflow: hidden; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+th { background: rgba(0,0,0,0.3); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--hint); }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.preset-bar { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+.preset-chip { padding: 6px 12px; border-radius: 20px; background: var(--glass); border: 1px solid var(--glass-border); font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+.preset-chip:hover { border-color: var(--accent); color: var(--accent); }
+.preset-chip.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.market-stat { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.market-stat:last-child { border-bottom: none; }
+.market-stat .label { color: var(--hint); }
+.market-stat .value { font-weight: 700; }
+.price-chart { height: 80px; display: flex; align-items: flex-end; gap: 2px; margin: 12px 0; padding: 8px 0; }
+.price-bar { flex: 1; background: linear-gradient(to top,var(--accent),rgba(91,141,239,0.3)); border-radius: 2px 2px 0 0; min-width: 2px; transition: var(--transition); }
+.price-bar:hover { background: linear-gradient(to top,#8b5cf6,rgba(139,92,246,0.3)); }
+.method-section { margin: 16px 0; }
+.method-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--accent); }
+.method-section p, .method-section li { font-size: 13px; color: var(--hint); line-height: 1.6; }
+.method-section code { background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-family: var(--mono); font-size: 12px; color: var(--text); }
+.method-section ul { padding-left: 20px; margin: 8px 0; }
+.footer { text-align: center; padding: 24px 0; font-size: 11px; color: var(--hint); border-top: 1px solid var(--border); margin-top: 24px; }
+.toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom,0)); left: 50%; transform: translateX(-50%) translateY(100px); background: var(--card); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 12px 20px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow); z-index: 1000; transition: transform 0.3s ease; backdrop-filter: blur(12px); }
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: var(--success); color: var(--success); }
+.toast.error { border-color: var(--danger); color: var(--danger); }
+.spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+[dir=rtl] { text-align: right; }
+[dir=rtl] .scenario { border-left: none; border-right: 3px solid var(--accent); }
+[dir=rtl] table th, [dir=rtl] table td { text-align: right; }
+[dir=rtl] .method-section ul { padding-left: 0; padding-right: 20px; }
+.empty-state { text-align: center; padding: 32px 16px; color: var(--hint); }
+.empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
+.empty-state p { font-size: 13px; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+.pulse { animation: pulse 2s ease-in-out infinite; }
 </style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <div>
-      <h1>Gift Crafting Optimizer</h1>
-      <div class="subtitle">Telegram Star Gifts — crafting probability calculator (documented rules)</div>
-    </div>
-    <div class="note">v1.0 · no login · no trading</div>
-  </header>
-
-  <div class="warn">
-    <strong>Disclaimer:</strong> Probabilities are mathematical estimates based on documented Telegram rules.
-    They do NOT guarantee a specific outcome, profit, or market value. Inputs are user-provided.
-    This tool does not execute crafts or trades.
-  </div>
-
-  <div class="tabs">
-    <div class="tab active" data-tab="calc">Calculator</div>
-    <div class="tab" data-tab="market">Market Context</div>
-    <div class="tab" data-tab="method">Methodology</div>
-  </div>
-
-  <div id="calc" class="panel active">
-    <div class="card">
-      <div class="row" style="justify-content:space-between;">
-        <strong>Scenarios</strong>
-        <div>
-          <button class="secondary" id="addScenario">+ Add scenario</button>
-          <button id="calcAll">Calculate all</button>
-          <button class="secondary" id="exportResults">Export results</button>
+<div class="app">
+  <header class="header">
+    <div class="header-row">
+      <div class="logo">
+        <div class="logo-icon">🎲</div>
+        <div class="logo-text">
+          <h1 data-i18n="title">Gift Crafting Optimizer</h1>
+          <span data-i18n="subtitle">Telegram Star Gifts — evidence-based calculator</span>
         </div>
       </div>
-      <div class="note">Presets:</div>
-      <div>
-        <span class="preset" data-preset="official">Official example (3 gifts)</span>
-        <span class="preset" data-preset="two">2 gifts, 50/50</span>
-        <span class="preset" data-preset="four">4 gifts, max chance</span>
+      <button class="lang-toggle" id="langToggle" onclick="toggleLang()">EN</button>
+    </div>
+  </header>
+  <div class="warn">
+    <span class="warn-icon">⚠️</span>
+    <span data-i18n="warn">Probabilities are mathematical estimates based on documented Telegram rules. They do NOT guarantee outcomes, profit, or market value. No trading, no execution.</span>
+  </div>
+  <nav class="nav">
+    <button class="nav-btn active" data-tab="calc" data-i18n="tab_calc">Calculator</button>
+    <button class="nav-btn" data-tab="market" data-i18n="tab_market">Market</button>
+    <button class="nav-btn" data-tab="optimize" data-i18n="tab_optimize">Optimizer</button>
+    <button class="nav-btn" data-tab="method" data-i18n="tab_method">Method</button>
+  </nav>
+  <div id="calc" class="panel active">
+    <div class="card">
+      <div class="card-title"><span>📊</span><span data-i18n="scenarios_title">Scenarios</span></div>
+      <div class="row" style="justify-content:space-between;margin-bottom:12px;">
+        <div class="preset-bar">
+          <span class="preset-chip" data-preset="official" data-i18n="preset_official">Official example</span>
+          <span class="preset-chip" data-preset="two" data-i18n="preset_two">2 gifts 50/50</span>
+          <span class="preset-chip" data-preset="four" data-i18n="preset_four">4 gifts max</span>
+          <span class="preset-chip" data-preset="ev" data-i18n="preset_ev">EV example</span>
+        </div>
+        <div class="row">
+          <button class="btn btn-secondary btn-sm" onclick="newScenario(null)" data-i18n="btn_add">+ Add</button>
+          <button class="btn btn-primary btn-sm" onclick="calculateAll()" data-i18n="btn_calc">Calculate</button>
+        </div>
       </div>
       <div id="scenarios"></div>
       <div id="results"></div>
     </div>
   </div>
-
   <div id="market" class="panel">
     <div class="card">
-      <strong>Static market sample</strong>
-      <p class="note">Source: Fragment.com public pages (Oct 2026). 59 recent sold prices, unit = Gram (TON). NOT live, NOT Stars. No KYC bypass.</p>
-      <div id="marketStats"></div>
-      <div class="note" style="margin-top:8px;">Price distribution (sorted):</div>
-      <div id="priceList" style="font-size:11px; color:var(--hint); max-height:120px; overflow:auto;"></div>
+      <div class="card-title"><span>📈</span><span data-i18n="market_title">Static market sample</span></div>
+      <p style="font-size:12px;color:var(--hint);margin-bottom:12px;" data-i18n="market_desc">Source: Fragment.com public pages (Oct 2026). 59 recent sold prices. Unit = Gram (TON). NOT live, NOT Stars.</p>
+      <div id="marketStats" class="stat-grid"></div>
+      <div class="price-chart" id="priceChart"></div>
+      <p style="font-size:11px;color:var(--hint);margin-top:4px;" data-i18n="price_dist">Price distribution (sorted):</p>
+      <div id="priceList" style="font-size:11px;color:var(--hint);max-height:80px;overflow:auto;margin-top:4px;"></div>
     </div>
     <div class="card">
-      <strong>Fee impact calculator</strong>
-      <p class="note">Test whether a price gap survives fees. All values in the same currency unit.</p>
+      <div class="card-title"><span>💰</span><span data-i18n="fee_title">Fee impact calculator</span></div>
+      <p style="font-size:12px;color:var(--hint);margin-bottom:8px;" data-i18n="fee_desc">Test whether a price gap survives fees. All values in the same currency unit.</p>
       <div class="grid3">
-        <div><label>Buy price</label><input type="number" id="feeBuy" value="10000"></div>
-        <div><label>Sell price</label><input type="number" id="feeSell" value="11000"></div>
-        <div><label>Gas / fixed cost</label><input type="number" id="feeGas" value="1"></div>
+        <div><label data-i18n="fee_buy">Buy price</label><input type="number" id="feeBuy" value="10000"></div>
+        <div><label data-i18n="fee_sell">Sell price</label><input type="number" id="feeSell" value="11000"></div>
+        <div><label data-i18n="fee_gas">Gas / fixed</label><input type="number" id="feeGas" value="1"></div>
       </div>
       <div class="grid2">
-        <div><label>Buy fee %</label><input type="number" id="feeBuyPct" value="0"></div>
-        <div><label>Sell fee %</label><input type="number" id="feeSellPct" value="5"></div>
+        <div><label data-i18n="fee_buy_pct">Buy fee %</label><input type="number" id="feeBuyPct" value="0"></div>
+        <div><label data-i18n="fee_sell_pct">Sell fee %</label><input type="number" id="feeSellPct" value="5"></div>
       </div>
-      <button style="margin-top:8px;" onclick="calcFee()">Calculate fee impact</button>
+      <button class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="calcFee()" data-i18n="btn_calc_fee">Calculate fee impact</button>
       <div id="feeResult" class="result" style="display:none;"></div>
     </div>
   </div>
-
-  <div id="method" class="panel">
-    <div class="card methodology">
-      <h3>Crafting success</h3>
-      <p>success_rate = sum(craft_chance_permille) of 1-4 inputs (permille). UI % = floor((sum + 5) / 10), clamped 0-100. Probability = min(sum/1000, 1.0). All inputs are burned on attempt.</p>
-      <h3>Attribute persistence</h3>
-      <p>Use stargifts_craft_attribute_permilles (client config): array of 4 rows; row N has N+1 integers (permille). For k inputs, use row k-1. Group pattern/backdrop attributes by ID; for a group of size m, persistence = row[m-1] / 1000.</p>
-      <h3>Key distinction</h3>
-      <p>craft_chance_permille = per-gift success contribution. stargifts_craft_attribute_permilles = attribute persistence config. These are different fields and are not conflated.</p>
-      <h3>Data access</h3>
-      <p>Bot API has NO gift-craft methods. MTProto (user session) provides craft fields. This tool runs client-side on user-provided data only.</p>
-      <h3>Sources</h3>
-      <ul>
-        <li>core.telegram.org/api/gifts (crafting section)</li>
-        <li>payments.craftStarGift, getCraftStarGifts, getResaleStarGifts</li>
-        <li>Telegram blog: Gift Crafting (Android redesign release)</li>
-      </ul>
-      <h3>Limitations</h3>
-      <ul>
-        <li>Does not predict which specific attribute is chosen on success (random among candidates).</li>
-        <li>Does not estimate future market value.</li>
-        <li>Config values are user-provided, not verified against live client.</li>
-        <li>Market sample is a static snapshot, not live.</li>
-      </ul>
+  <div id="optimize" class="panel">
+    <div class="card">
+      <div class="card-title"><span>🎯</span><span data-i18n="opt_title">Crafting optimizer</span></div>
+      <p style="font-size:12px;color:var(--hint);margin-bottom:12px;" data-i18n="opt_desc">Given your gifts and market prices, find the optimal crafting strategy. Compares all 1-4 input combinations.</p>
+      <div class="grid2">
+        <div><label data-i18n="opt_gifts">Available gifts (permille, comma)</label><input type="text" id="optGifts" value="250,250,250,250" placeholder="e.g. 250,250,250"></div>
+        <div><label data-i18n="opt_price">Expected sell price (Gram)</label><input type="number" id="optPrice" value="12000"></div>
+      </div>
+      <div class="grid2">
+        <div><label data-i18n="opt_cost">Cost per gift (Gram)</label><input type="number" id="optCost" value="8000"></div>
+        <div><label data-i18n="opt_config">Config (JSON)</label><input type="text" id="optConfig" value="[[100],[100,200],[60,180,450],[100,200,300,400]]"></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="runOptimizer()" data-i18n="btn_optimize">Run optimizer</button>
+      <div id="optResults"></div>
     </div>
   </div>
-
-  <div class="note" style="margin-top:16px; text-align:center;">
-    Gift Crafting Optimizer · evidence-based · no hype · no trading
+  <div id="method" class="panel">
+    <div class="card">
+      <div class="method-section">
+        <h3 data-i18n="m_craft">Crafting success</h3>
+        <p data-i18n="m_craft_desc">success_rate = sum(craft_chance_permille) of 1-4 inputs (permille). UI % = floor((sum + 5) / 10), clamped 0-100. Probability = min(sum/1000, 1.0). All inputs burned on attempt.</p>
+      </div>
+      <div class="method-section">
+        <h3 data-i18n="m_attr">Attribute persistence</h3>
+        <p data-i18n="m_attr_desc">Use stargifts_craft_attribute_permilles (client config): array of 4 rows; row N has N+1 integers (permille). For k inputs, use row k-1. Group pattern/backdrop attributes by ID; for a group of size m, persistence = row[m-1] / 1000.</p>
+      </div>
+      <div class="method-section">
+        <h3 data-i18n="m_distinct">Key distinction</h3>
+        <p data-i18n="m_distinct_desc">craft_chance_permille = per-gift success contribution. stargifts_craft_attribute_permilles = attribute persistence config. Different fields, never conflated.</p>
+      </div>
+      <div class="method-section">
+        <h3 data-i18n="m_data">Data access</h3>
+        <p data-i18n="m_data_desc">Bot API has NO gift-craft methods. MTProto (user session) provides craft fields. This tool runs client-side on user-provided data only.</p>
+      </div>
+      <div class="method-section">
+        <h3 data-i18n="m_sources">Sources</h3>
+        <ul>
+          <li>core.telegram.org/api/gifts (crafting section)</li>
+          <li>payments.craftStarGift, getCraftStarGifts, getResaleStarGifts</li>
+          <li>Telegram blog: Gift Crafting (Android redesign release)</li>
+        </ul>
+      </div>
+      <div class="method-section">
+        <h3 data-i18n="m_limits">Limitations</h3>
+        <ul>
+          <li data-i18n="m_lim1">Does not predict which specific attribute is chosen on success (random among candidates).</li>
+          <li data-i18n="m_lim2">Does not estimate future market value.</li>
+          <li data-i18n="m_lim3">Config values are user-provided, not verified against live client.</li>
+          <li data-i18n="m_lim4">Market sample is a static snapshot, not live.</li>
+        </ul>
+      </div>
+    </div>
   </div>
+  <footer class="footer">
+    <span data-i18n="footer">Gift Crafting Optimizer · evidence-based · no hype · no trading</span>
+  </footer>
 </div>
-
+<div class="toast" id="toast"></div>
 <script src="gift_calc.js"></script>
 <script>
-const tg = window.Telegram && window.Telegram.WebApp;
-if (tg) { try { tg.ready(); tg.expand(); } catch(e) {} }
-
-document.querySelectorAll(".tab").forEach(t => {
-  t.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
-    document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
-    t.classList.add("active");
-    document.getElementById(t.dataset.tab).classList.add("active");
-  });
-});
-
-const PRESETS = {
-  official: { base: 1, count: 3, inputs: [
-    { permille: 100, patterns: "", backdrops: "green" },
-    { permille: 100, patterns: "", backdrops: "green" },
-    { permille: 100, patterns: "", backdrops: "black" }
-  ], config: [[100],[100,200],[60,180,450],[100,200,300,400]] },
-  two: { base: 1, count: 2, inputs: [
-    { permille: 250, patterns: "42,42", backdrops: "red,red" },
-    { permille: 250, patterns: "", backdrops: "red" }
-  ], config: [[100],[100,200],[60,180,450],[100,200,300,400]] },
-  four: { base: 1, count: 4, inputs: [
-    { permille: 250, patterns: "", backdrops: "" },
-    { permille: 250, patterns: "", backdrops: "" },
-    { permille: 250, patterns: "", backdrops: "" },
-    { permille: 250, patterns: "", backdrops: "" }
-  ], config: [[100],[100,200],[60,180,450],[100,200,300,400]] }
+const I18N = {
+  en: { title: "Gift Crafting Optimizer", subtitle: "Telegram Star Gifts — evidence-based calculator", warn: "Probabilities are mathematical estimates based on documented Telegram rules. They do NOT guarantee outcomes, profit, or market value. No trading, no execution.", tab_calc: "Calculator", tab_market: "Market", tab_optimize: "Optimizer", tab_method: "Method", scenarios_title: "Scenarios", btn_add: "+ Add", btn_calc: "Calculate", preset_official: "Official example", preset_two: "2 gifts 50/50", preset_four: "4 gifts max", preset_ev: "EV example", market_title: "Static market sample", market_desc: "Source: Fragment.com public pages (Oct 2026). 59 recent sold prices. Unit = Gram (TON). NOT live, NOT Stars.", price_dist: "Price distribution (sorted):", fee_title: "Fee impact calculator", fee_desc: "Test whether a price gap survives fees. All values in the same currency unit.", fee_buy: "Buy price", fee_sell: "Sell price", fee_gas: "Gas / fixed", fee_buy_pct: "Buy fee %", fee_sell_pct: "Sell fee %", btn_calc_fee: "Calculate fee impact", opt_title: "Crafting optimizer", opt_desc: "Given your gifts and market prices, find the optimal crafting strategy. Compares all 1-4 input combinations.", opt_gifts: "Available gifts (permille, comma)", opt_price: "Expected sell price (Gram)", opt_cost: "Cost per gift (Gram)", opt_config: "Config (JSON)", btn_optimize: "Run optimizer", m_craft: "Crafting success", m_craft_desc: "success_rate = sum(craft_chance_permille) of 1-4 inputs (permille). UI % = floor((sum + 5) / 10), clamped 0-100. Probability = min(sum/1000, 1.0). All inputs burned on attempt.", m_attr: "Attribute persistence", m_attr_desc: "Use stargifts_craft_attribute_permilles (client config): array of 4 rows; row N has N+1 integers (permille). For k inputs, use row k-1. Group pattern/backdrop attributes by ID; for a group of size m, persistence = row[m-1] / 1000.", m_distinct: "Key distinction", m_distinct_desc: "craft_chance_permille = per-gift success contribution. stargifts_craft_attribute_permilles = attribute persistence config. Different fields, never conflated.", m_data: "Data access", m_data_desc: "Bot API has NO gift-craft methods. MTProto (user session) provides craft fields. This tool runs client-side on user-provided data only.", m_sources: "Sources", m_limits: "Limitations", m_lim1: "Does not predict which specific attribute is chosen on success (random among candidates).", m_lim2: "Does not estimate future market value.", m_lim3: "Config values are user-provided, not verified against live client.", m_lim4: "Market sample is a static snapshot, not live.", footer: "Gift Crafting Optimizer · evidence-based · no hype · no trading", lbl_base: "Base gift ID", lbl_inputs: "Inputs (1-4)", lbl_config: "Craft attribute permilles (JSON)", lbl_permille: "Permille (0-1000)", lbl_patterns: "Pattern IDs", lbl_backdrops: "Backdrop IDs", no_scenarios: "No scenarios. Add one." },
+  ar: { title: "محسّن التصنيع للهدايا", subtitle: "هدايا Telegram Star — حاسبة قائمة على الأدلة", warn: "الاحتمالات هي تقديرات رياضية بناءً على قواعد Telegram الموثقة. لا تضمن نتائج أو أرباحاً أو قيمة سوقية. لا تداول ولا تنفيذ.", tab_calc: "الحاسبة", tab_market: "السوق", tab_optimize: "التحسين", tab_method: "المنهجية", scenarios_title: "السيناريوهات", btn_add: "+ إضافة", btn_calc: "حساب", preset_official: "مثال رسمي", preset_two: "هدفتان 50/50", preset_four: "4 هدايا كحد أقصى", preset_ev: "مثال القيمة المتوقعة", market_title: "عينة سوق ثابتة", market_desc: "المصدر: صفحات Fragment.com العامة (أكتوبر 2026). 59 سعراً مبيعاً مؤخراً. الوحدة = Gram (TON). ليس live، ليس Stars.", price_dist: "توزيع الأسعار (مرتب):", fee_title: "حاسبة تأثير الرسوم", fee_desc: "اختبر ما إذا كانت فجوة السعر تنجو من الرسوم. جميع القيم في نفس وحدة العملة.", fee_buy: "سعر الشراء", fee_sell: "سعر البيع", fee_gas: "Gas / تكلفة ثابتة", fee_buy_pct: "رسوم الشراء %", fee_sell_pct: "رسوم البيع %", btn_calc_fee: "حساب تأثير الرسوم", opt_title: "محسّن التصنيع", opt_desc: "بناءً على هداياك وأسعار السوق، ابحث عن استراتيجية التصنيع المثلى. يقارن جميع تركيبات 1-4 مدخلات.", opt_gifts: "الهدايا المتاحة (permille، مفصولة بفواصل)", opt_price: "سعر البيع المتوقع (Gram)", opt_cost: "التكلفة لكل هدية (Gram)", opt_config: "التكوين (JSON)", btn_optimize: "تشغيل المحسّن", m_craft: "نجاح التصنيع", m_craft_desc: "success_rate = sum(craft_chance_permille) لـ 1-4 مدخلات (permille). UI % = floor((sum + 5) / 10)، مقيّد 0-100. Probability = min(sum/1000, 1.0). جميع المدخلات تُحرق عند المحاولة.", m_attr: "الاحتفاظ بالسمات", m_attr_desc: "استخدم stargifts_craft_attribute_permilles (تكوين العميل): مصفوفة من 4 صفوف؛ الصف N يحتوي N+1 أعداد (permille). لـ k مدخلات، استخدم الصف k-1. جمّع سمات النمط/الخلفية حسب ID؛ لمجموعة من الحجم m، الاحتفاظ = row[m-1] / 1000.", m_distinct: "ال distinction principal", m_distinct_desc: "craft_chance_permille = مساهمة نجاح كل هدية. stargifts_craft_attribute_permilles = تكوين الاحتفاظ بالسمات. حقول مختلفة، لا تخلط بينهما.", m_data: "الوصول إلى البيانات", m_data_desc: "Bot API ليس لديه methods لتصنيع الهدايا. MTProto (جلسة المستخدم) يوفر حقول التصنيع. هذه الأداة تعمل client-side على بيانات المستخدم فقط.", m_sources: "المصادر", m_limits: "القيود", m_lim1: "لا تتنبأ بأي سمة محددة تُختار عند النجاح (عشوائي بين المرشحين).", m_lim2: "لا تقدر القيمة السوقية المستقبلية.", m_lim3: "قيم التكوين يوفرها المستخدم، غير متحقق منها مقابل العميل المباشر.", m_lim4: "عينة السوق هي لقطة ثابتة، ليست live.", footer: "محسّن التصنيع للهدايا · قائمة على الأدلة · بدون تهويل · بدون تداول", lbl_base: "Base gift ID", lbl_inputs: "Inputs (1-4)", lbl_config: "Craft attribute permilles (JSON)", lbl_permille: "Permille (0-1000)", lbl_patterns: "Pattern IDs", lbl_backdrops: "Backdrop IDs", no_scenarios: "No scenarios. Add one." }
 };
-
-document.querySelectorAll(".preset").forEach(p => {
-  p.addEventListener("click", () => applyPreset(p.dataset.preset));
-});
-
-function applyPreset(name) {
-  const pr = PRESETS[name];
-  if (!pr) return;
-  // ensure at least one scenario
-  if (document.querySelectorAll(".scenario-card").length === 0) newScenario(null);
-  const card = document.querySelector(".scenario-card");
-  card.querySelector(".base").value = pr.base;
-  card.querySelector(".count").value = pr.count;
-  card.querySelector(".config").value = JSON.stringify(pr.config);
-  renderScenarioInputs(card.id);
-  const rows = card.querySelectorAll(".input-block");
-  rows.forEach((r, i) => {
-    const inp = pr.inputs[i];
-    r.querySelector(".permille").value = inp.permille;
-    r.querySelector(".patterns").value = inp.patterns;
-    r.querySelector(".backdrops").value = inp.backdrops;
-  });
+let currentLang = 'en';
+function toggleLang() { currentLang = currentLang === 'en' ? 'ar' : 'en'; applyLang(); haptic('selection'); }
+function applyLang() {
+  const dict = I18N[currentLang];
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if (dict[key]) el.textContent = dict[key]; });
+  document.getElementById('langToggle').textContent = currentLang === 'en' ? 'EN' : 'AR';
 }
-
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) {
+  try {
+    tg.ready(); tg.expand();
+    if (tg.themeParams) {
+      const tp = tg.themeParams;
+      if (tp.bg_color) document.documentElement.style.setProperty('--bg', tp.bg_color);
+      if (tp.secondary_bg_color) document.documentElement.style.setProperty('--card', tp.secondary_bg_color);
+      if (tp.text_color) document.documentElement.style.setProperty('--text', tp.text_color);
+      if (tp.hint_color) document.documentElement.style.setProperty('--hint', tp.hint_color);
+      if (tp.button_color) document.documentElement.style.setProperty('--accent', tp.button_color);
+      if (tp.button_text_color) document.documentElement.style.setProperty('--accent-text', tp.button_text_color);
+    }
+    tg.BackButton.onClick(() => {
+      if (document.querySelector('.panel.active').id !== 'calc') { document.querySelector('.nav-btn[data-tab="calc"]').click(); }
+      else { tg.close(); }
+    });
+    tg.BackButton.show();
+    tg.onEvent('viewportChanged', () => { document.documentElement.style.setProperty('--vh', tg.viewportHeight + 'px'); });
+  } catch (e) { console.warn('TMA init:', e); }
+}
+function haptic(type) {
+  if (!tg || !tg.HapticFeedback) return;
+  try {
+    if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+    else if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+    else if (type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
+    else if (type === 'selection') tg.HapticFeedback.selectionChanged();
+    else tg.HapticFeedback.impactOccurred(type || 'light');
+  } catch (e) {}
+}
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + (type || '');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    haptic('selection');
+    if (tg && tg.BackButton) { if (btn.dataset.tab === 'calc') tg.BackButton.hide(); else tg.BackButton.show(); }
+  });
+});
 let scenarioCount = 0;
 function newScenario(prefill) {
   scenarioCount++;
-  const id = "sc" + scenarioCount;
-  const div = document.createElement("div");
-  div.className = "card scenario-card";
-  div.id = id;
+  const id = 'sc' + scenarioCount;
+  const div = document.createElement('div');
+  div.className = 'scenario'; div.id = id;
   div.innerHTML = `
-    <div class="row" style="justify-content:space-between;">
-      <strong>Scenario ${scenarioCount}</strong>
-      <button class="danger" onclick="removeScenario('${id}')">Remove</button>
-    </div>
-    <div class="grid2">
-      <div><label>Base gift ID</label><input type="number" class="base" value="${prefill?prefill.base:1}" min="1"></div>
-      <div><label>Inputs (1-4)</label><select class="count" onchange="renderScenarioInputs('${id}')">
-        <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option>
+    <div class='scenario-header'><span class='scenario-title'>Scenario ${scenarioCount}</span><button class='btn btn-danger btn-sm' onclick="removeScenario('${id}')">✕</button></div>
+    <div class='grid2'>
+      <div><label data-i18n='lbl_base'>Base gift ID</label><input type='number' class='base' value='${prefill?prefill.base:1}' min='1'></div>
+      <div><label data-i18n='lbl_inputs'>Inputs (1-4)</label><select class='count' onchange="renderScenarioInputs('${id}')">
+        <option value='1'>1</option><option value='2' selected>2</option><option value='3'>3</option><option value='4'>4</option>
       </select></div>
     </div>
-    <label>Craft attribute permilles config (JSON)</label>
-    <textarea class="config">${prefill?JSON.stringify(prefill.config):"[[100],[100,200],[60,180,450],[100,200,300,400]]"}</textarea>
-    <div class="inputs"></div>
-  `;
-  document.getElementById("scenarios").appendChild(div);
-  if (prefill) document.getElementById(id).querySelector(".count").value = prefill.count;
+    <label data-i18n='lbl_config'>Craft attribute permilles (JSON)</label>
+    <textarea class='config'>${prefill?JSON.stringify(prefill.config):'[[100],[100,200],[60,180,450],[100,200,300,400]]'}</textarea>
+    <div class='inputs'></div>`;
+  document.getElementById('scenarios').appendChild(div);
+  if (prefill) document.getElementById(id).querySelector('.count').value = prefill.count;
   renderScenarioInputs(id);
   if (prefill) {
-    const rows = document.getElementById(id).querySelectorAll(".input-block");
-    rows.forEach((r, i) => {
-      r.querySelector(".permille").value = prefill.inputs[i].permille;
-      r.querySelector(".patterns").value = prefill.inputs[i].patterns;
-      r.querySelector(".backdrops").value = prefill.inputs[i].backdrops;
-    });
+    const rows = document.getElementById(id).querySelectorAll('.input-block');
+    rows.forEach((r, i) => { r.querySelector('.permille').value = prefill.inputs[i].permille; r.querySelector('.patterns').value = prefill.inputs[i].patterns; r.querySelector('.backdrops').value = prefill.inputs[i].backdrops; });
   }
+  applyLang();
 }
-
-function removeScenario(id) {
-  const el = document.getElementById(id);
-  if (el) el.remove();
-}
-
+function removeScenario(id) { const el = document.getElementById(id); if (el) { el.style.opacity = '0'; el.style.transform = 'scale(0.95)'; setTimeout(() => el.remove(), 200); } haptic('light'); }
 function renderScenarioInputs(id) {
   const card = document.getElementById(id);
-  const n = parseInt(card.querySelector(".count").value);
-  const container = card.querySelector(".inputs");
-  container.innerHTML = "";
+  const n = parseInt(card.querySelector('.count').value);
+  const container = card.querySelector('.inputs');
+  container.innerHTML = '';
   for (let i = 0; i < n; i++) {
-    const block = document.createElement("div");
-    block.className = "input-block";
-    block.innerHTML = `
-      <div class="note">Input ${i+1}</div>
-      <div class="grid3">
-        <div><label>Permille (0-1000)</label><input type="number" class="permille" value="250" min="0" max="1000"></div>
-        <div><label>Pattern IDs (comma)</label><input type="text" class="patterns" placeholder="e.g. 42,42"></div>
-        <div><label>Backdrop IDs (comma)</label><input type="text" class="backdrops" placeholder="e.g. red,red"></div>
-      </div>
-    `;
+    const block = document.createElement('div');
+    block.className = 'input-block';
+    block.innerHTML = `<div class='input-label'>Input ${i+1}</div><div class='grid3'><div><label data-i18n='lbl_permille'>Permille (0-1000)</label><input type='number' class='permille' value='250' min='0' max='1000'></div><div><label data-i18n='lbl_patterns'>Pattern IDs</label><input type='text' class='patterns' placeholder='e.g. 42,42'></div><div><label data-i18n='lbl_backdrops'>Backdrop IDs</label><input type='text' class='backdrops' placeholder='e.g. red,red'></div></div>`;
     container.appendChild(block);
   }
+  applyLang();
 }
-
 function collectScenario(card) {
-  const base = parseInt(card.querySelector(".base").value);
-  const config = JSON.parse(card.querySelector(".config").value);
-  const rows = card.querySelectorAll(".input-block");
+  const base = parseInt(card.querySelector('.base').value);
+  const config = JSON.parse(card.querySelector('.config').value);
+  const rows = card.querySelectorAll('.input-block');
   const inputs = [];
   rows.forEach((r, idx) => {
-    const permille = parseInt(r.querySelector(".permille").value);
-    const patterns = r.querySelector(".patterns").value.trim().split(",").map(s=>s.trim()).filter(Boolean);
-    const backdrops = r.querySelector(".backdrops").value.trim().split(",").map(s=>s.trim()).filter(Boolean);
+    const permille = parseInt(r.querySelector('.permille').value);
+    const patterns = r.querySelector('.patterns').value.trim().split(',').map(s=>s.trim()).filter(Boolean);
+    const backdrops = r.querySelector('.backdrops').value.trim().split(',').map(s=>s.trim()).filter(Boolean);
     const attrs = [];
-    patterns.forEach(p => attrs.push({type:"pattern", id: p}));
-    backdrops.forEach(b => attrs.push({type:"backdrop", id: b}));
-    inputs.push({ unique_id: "g"+(idx+1), base_gift_id: base, craft_chance_permille: permille, attributes: attrs });
+    patterns.forEach(p => attrs.push({type:'pattern', id: p}));
+    backdrops.forEach(b => attrs.push({type:'backdrop', id: b}));
+    inputs.push({ unique_id: 'g'+(idx+1), base_gift_id: base, craft_chance_permille: permille, attributes: attrs });
   });
   return { base_gift_id: base, inputs, config };
 }
-
 function calculateAll() {
-  const cards = document.querySelectorAll(".scenario-card");
-  const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "";
-  if (cards.length === 0) {
-    resultsDiv.innerHTML = "<div class='err'>No scenarios. Add one.</div>";
-    return;
-  }
+  const cards = document.querySelectorAll('.scenario');
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML = '';
+  if (cards.length === 0) { resultsDiv.innerHTML = "<div class='empty-state'><div class='icon'>📋</div><p data-i18n='no_scenarios'>No scenarios. Add one.</p></div>"; applyLang(); return; }
   cards.forEach(card => {
     let out;
-    try {
-      const sc = collectScenario(card);
-      out = expectedDistribution(sc.inputs, sc.config);
-    } catch (e) {
-      const d = document.createElement("div");
-      d.className = "result";
-      d.innerHTML = "<div class='err'>" + card.id + ": " + e.message + "</div>";
-      resultsDiv.appendChild(d);
-      return;
-    }
+    try { const sc = collectScenario(card); out = expectedDistribution(sc.inputs, sc.config); }
+    catch (e) { const d = document.createElement('div'); d.className = 'result'; d.innerHTML = "<div style='color:var(--danger);'>" + card.id + ': ' + e.message + '</div>'; resultsDiv.appendChild(d); return; }
     const attrRows = [];
-    for (const type of ["pattern","backdrop"]) {
+    for (const type of ['pattern','backdrop']) {
       const groups = out.attribute_groups[type] || {};
       const probs = out.attribute_persistence[type] || {};
-      for (const key of Object.keys(groups)) {
-        attrRows.push("<tr><td>" + type + "</td><td>" + key + "</td><td>" + groups[key] + "</td><td>" + (probs[key]*100).toFixed(1) + "%</td></tr>");
-      }
+      for (const key of Object.keys(groups)) { attrRows.push('<tr><td>' + type + '</td><td>' + key + '</td><td>' + groups[key] + '</td><td>' + (probs[key]*100).toFixed(1) + '%</td></tr>'); }
     }
-    const attrTable = attrRows.length
-      ? "<table><tr><th>Type</th><th>ID</th><th>Count</th><th>Persistence</th></tr>" + attrRows.join("") + "</table>"
-      : "<p class='note'>No attributes provided.</p>";
-    const d = document.createElement("div");
-    d.className = "result";
-    d.innerHTML = `
-      <div style="font-weight:700; margin-bottom:4px;">${card.id}</div>
-      <div>Inputs: ${out.inputs_count} · Total craft chance: ${out.total_permille} permille</div>
-      <div>Success probability: <span class="prob-big">${(out.success_probability*100).toFixed(1)}%</span> (UI: ${out.ui_percentage}%)</div>
-      <div class="note">Inputs burned on attempt (success or fail).</div>
-      ${attrTable}
-      <div class="note">${out.limitations.join(" ")}</div>
-    `;
+    const attrTable = attrRows.length ? '<table><tr><th>Type</th><th>ID</th><th>Count</th><th>Persistence</th></tr>' + attrRows.join('') + '</table>' : "<p style='font-size:12px;color:var(--hint);'>No attributes provided.</p>";
+    const d = document.createElement('div'); d.className = 'result';
+    d.innerHTML = `<div class='result-header'><span style='font-weight:700;'>${card.id}</span><span style='font-size:11px;color:var(--hint);'>${out.inputs_count} inputs</span></div>
+      <div style='font-size:13px;margin-bottom:8px;'>Total craft chance: <strong>${out.total_permille}</strong> permille</div>
+      <div class='prob-display'><div class='prob-value'>${(out.success_probability*100).toFixed(1)}%</div><div class='prob-label'>Success probability (UI: ${out.ui_percentage}%)</div></div>
+      <div class='stat-grid'><div class='stat-box'><div class='val'>${out.total_permille}</div><div class='lbl'>Permille</div></div><div class='stat-box'><div class='val'>${out.inputs_count}</div><div class='lbl'>Inputs</div></div><div class='stat-box'><div class='val'>${out.ui_percentage}%</div><div class='lbl'>UI %</div></div></div>${attrTable}
+      <p style='font-size:11px;color:var(--hint);margin-top:8px;'>${out.limitations.join(' ')}</p>`;
     resultsDiv.appendChild(d);
   });
+  haptic('success'); showToast(currentLang === 'ar' ? 'تم الحساب' : 'Calculated', 'success');
 }
-
-document.getElementById("addScenario").addEventListener("click", () => newScenario(null));
-document.getElementById("calcAll").addEventListener("click", calculateAll);
-document.getElementById("exportResults").addEventListener("click", exportResults);
-
-function exportResults() {
-  const resultsDiv = document.getElementById("results");
-  if (!resultsDiv || !resultsDiv.innerText.trim()) {
-    alert("No results to export. Calculate first.");
-    return;
-  }
-  const cards = document.querySelectorAll(".scenario-card");
-  const data = [];
-  cards.forEach(card => {
-    try {
-      const sc = collectScenario(card);
-      const out = expectedDistribution(sc.inputs, sc.config);
-      data.push({ scenario: card.id, ...out });
-    } catch (e) { /* skip invalid */ }
-  });
-  const json = JSON.stringify(data, null, 2);
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(json).then(() => alert("Results copied to clipboard as JSON.")).catch(() => fallbackCopy(json));
-  } else {
-    fallbackCopy(json);
-  }
+const PRESETS = {
+  official: { base: 1, count: 3, inputs: [{ permille: 100, patterns: '', backdrops: 'green' }, { permille: 100, patterns: '', backdrops: 'green' }, { permille: 100, patterns: '', backdrops: 'black' }], config: [[100],[100,200],[60,180,450],[100,200,300,400]] },
+  two: { base: 1, count: 2, inputs: [{ permille: 250, patterns: '42,42', backdrops: 'red,red' }, { permille: 250, patterns: '', backdrops: 'red' }], config: [[100],[100,200],[60,180,450],[100,200,300,400]] },
+  four: { base: 1, count: 4, inputs: [{ permille: 250, patterns: '', backdrops: '' }, { permille: 250, patterns: '', backdrops: '' }, { permille: 250, patterns: '', backdrops: '' }, { permille: 250, patterns: '', backdrops: '' }], config: [[100],[100,200],[60,180,450],[100,200,300,400]] },
+  ev: { base: 1, count: 3, inputs: [{ permille: 300, patterns: '1,2', backdrops: 'gold' }, { permille: 200, patterns: '3', backdrops: 'gold' }, { permille: 150, patterns: '', backdrops: 'silver' }], config: [[100],[100,200],[60,180,450],[100,200,300,400]] }
+};
+document.querySelectorAll('.preset-chip').forEach(p => {
+  p.addEventListener('click', () => { document.querySelectorAll('.preset-chip').forEach(x => x.classList.remove('active')); p.classList.add('active'); applyPreset(p.dataset.preset); haptic('light'); });
+});
+function applyPreset(name) {
+  const pr = PRESETS[name]; if (!pr) return;
+  if (document.querySelectorAll('.scenario').length === 0) newScenario(null);
+  const card = document.querySelector('.scenario');
+  card.querySelector('.base').value = pr.base; card.querySelector('.count').value = pr.count;
+  card.querySelector('.config').value = JSON.stringify(pr.config);
+  renderScenarioInputs(card.id);
+  const rows = card.querySelectorAll('.input-block');
+  rows.forEach((r, i) => { const inp = pr.inputs[i]; r.querySelector('.permille').value = inp.permille; r.querySelector('.patterns').value = inp.patterns; r.querySelector('.backdrops').value = inp.backdrops; });
 }
-function fallbackCopy(text) {
-  const ta = document.createElement("textarea");
-  ta.value = text;
-  document.body.appendChild(ta);
-  ta.select();
-  try { document.execCommand("copy"); alert("Results copied to clipboard as JSON."); }
-  catch (e) { alert("Copy failed. See console."); console.log(text); }
-  document.body.removeChild(ta);
-}
-
 const SAMPLE_PRICES = [88888,50000,48000,42000,30000,28555,23519,20888,20000,19999,19000,15000,15000,15000,14400,13999,13588,13500,13500,13500,13337,13000,13000,12990,12500,12500,12388,12345,12345,12000,12000,11999,11888,11660,11111,11111,11111,11111,11111,11100,10700,10449,10106,10000,10000,10000,10000,9999,9999,9999,9900,9900,8999,8888,8888,8300,8200,8088,8000];
 const ms = marketStats(SAMPLE_PRICES);
-document.getElementById("marketStats").innerHTML = `
-  <div class="stat"><div class="val">${ms.count}</div><div class="lbl">samples</div></div>
-  <div class="stat"><div class="val">${ms.min.toLocaleString()}</div><div class="lbl">min (Gram)</div></div>
-  <div class="stat"><div class="val">${ms.max.toLocaleString()}</div><div class="lbl">max (Gram)</div></div>
-  <div class="stat"><div class="val">${ms.median.toLocaleString()}</div><div class="lbl">median (Gram)</div></div>
-  <div class="stat"><div class="val">${ms.mean.toLocaleString()}</div><div class="lbl">mean (Gram)</div></div>
-`;
-document.getElementById("priceList").textContent = SAMPLE_PRICES.slice().sort((a,b)=>a-b).join(", ");
-
+document.getElementById('marketStats').innerHTML = `<div class='stat-box'><div class='val'>${ms.count}</div><div class='lbl'>samples</div></div><div class='stat-box'><div class='val'>${ms.min.toLocaleString()}</div><div class='lbl'>min (Gram)</div></div><div class='stat-box'><div class='val'>${ms.max.toLocaleString()}</div><div class='lbl'>max (Gram)</div></div><div class='stat-box'><div class='val'>${ms.median.toLocaleString()}</div><div class='lbl'>median</div></div><div class='stat-box'><div class='val'>${ms.mean.toLocaleString()}</div><div class='lbl'>mean</div></div>`;
+const chart = document.getElementById('priceChart');
+const sorted = SAMPLE_PRICES.slice().sort((a,b) => a-b);
+const maxP = Math.max(...sorted);
+sorted.forEach(p => { const bar = document.createElement('div'); bar.className = 'price-bar'; bar.style.height = Math.max(4, (p / maxP) * 100) + '%'; bar.title = p.toLocaleString() + ' Gram'; chart.appendChild(bar); });
+document.getElementById('priceList').textContent = sorted.join(', ');
 function calcFee() {
   try {
-    const r = computeFeeImpact(
-      parseFloat(document.getElementById("feeBuy").value),
-      parseFloat(document.getElementById("feeSell").value),
-      parseFloat(document.getElementById("feeBuyPct").value),
-      parseFloat(document.getElementById("feeSellPct").value),
-      parseFloat(document.getElementById("feeGas").value)
-    );
-    const el = document.getElementById("feeResult");
-    el.style.display = "block";
-    el.innerHTML = `
-      <div>Buy cost: ${r.buy_cost} · Sell net: ${r.sell_net}</div>
-      <div>Net profit: <span class="prob-big" style="font-size:18px; color:${r.profitable?'#3fb950':'#ff6b6b'};">${r.net_profit}</span></div>
-      <div>ROI: ${r.roi_percent}% · ${r.profitable ? "PROFITABLE" : "NOT PROFITABLE"}</div>
-    `;
-  } catch (e) {
-    const el = document.getElementById("feeResult");
-    el.style.display = "block";
-    el.innerHTML = "<div class='err'>" + e.message + "</div>";
-  }
+    const r = computeFeeImpact(parseFloat(document.getElementById('feeBuy').value), parseFloat(document.getElementById('feeSell').value), parseFloat(document.getElementById('feeBuyPct').value), parseFloat(document.getElementById('feeSellPct').value), parseFloat(document.getElementById('feeGas').value));
+    const el = document.getElementById('feeResult'); el.style.display = 'block';
+    el.innerHTML = `<div style='display:flex;justify-content:space-between;margin-bottom:4px;'><span style='color:var(--hint);'>Buy cost</span><span>${r.buy_cost.toLocaleString()}</span></div><div style='display:flex;justify-content:space-between;margin-bottom:4px;'><span style='color:var(--hint);'>Sell net</span><span>${r.sell_net.toLocaleString()}</span></div><div style='display:flex;justify-content:space-between;margin-bottom:8px;'><span style='color:var(--hint);'>ROI</span><span>${r.roi_percent}%</span></div><div style='text-align:center;padding:8px;background:rgba(0,0,0,0.2);border-radius:8px;'><span style='font-size:20px;font-weight:800;color:${r.profitable?'var(--success)':'var(--danger)'};'>${r.net_profit.toLocaleString()}</span><div style='font-size:11px;color:var(--hint);margin-top:2px;'>${r.profitable ? 'PROFITABLE' : 'NOT PROFITABLE'}</div></div>`;
+    haptic(r.profitable ? 'success' : 'warning');
+  } catch (e) { const el = document.getElementById('feeResult'); el.style.display = 'block'; el.innerHTML = "<div style='color:var(--danger);'>" + e.message + '</div>'; haptic('error'); }
 }
-
-newScenario(null);
+function runOptimizer() {
+  const gifts = document.getElementById('optGifts').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+  const sellPrice = parseFloat(document.getElementById('optPrice').value);
+  const cost = parseFloat(document.getElementById('optCost').value);
+  const config = JSON.parse(document.getElementById('optConfig').value);
+  const resultsDiv = document.getElementById('optResults');
+  resultsDiv.innerHTML = '';
+  if (gifts.length === 0) { showToast('Enter gift permilles', 'error'); return; }
+  const combos = [];
+  for (let k = 1; k <= Math.min(4, gifts.length); k++) {
+    const indices = []; for (let i = 0; i < gifts.length; i++) indices.push(i);
+    const combs = combinations(indices, k);
+    combs.forEach(c => {
+      const inputs = c.map(i => ({ unique_id: 'g' + (i+1), base_gift_id: 1, craft_chance_permille: gifts[i], attributes: [] }));
+      try {
+        const out = expectedDistribution(inputs, config);
+        const craftCost = k * cost; const successProb = out.success_probability;
+        const expectedRevenue = successProb * sellPrice; const ev = expectedRevenue - craftCost;
+        const roi = craftCost > 0 ? ((ev / craftCost) * 100) : 0;
+        combos.push({ k, indices: c, inputs, out, craftCost, expectedRevenue, ev, roi, successProb });
+      } catch (e) { }
+    });
+  }
+  combos.sort((a, b) => b.ev - a.ev);
+  if (combos.length === 0) { resultsDiv.innerHTML = "<div class='empty-state'><div class='icon'>🔍</div><p>No valid combinations.</p></div>"; return; }
+  const best = combos[0];
+  let html = `<div class='result' style='border-left:3px solid var(--success);'><div style='font-weight:700;margin-bottom:8px;color:var(--success);'>🏆 Best strategy</div>
+    <div style='font-size:13px;margin-bottom:4px;'>Use ${best.k} gift(s) (indices: ${best.indices.map(i=>i+1).join(', ')})</div>
+    <div class='prob-display'><div class='prob-value'>${(best.successProb*100).toFixed(1)}%</div><div class='prob-label'>Success probability</div></div>
+    <div class='stat-grid'><div class='stat-box'><div class='val'>${best.craftCost.toLocaleString()}</div><div class='lbl'>Craft cost</div></div><div class='stat-box'><div class='val'>${best.expectedRevenue.toLocaleString()}</div><div class='lbl'>Expected revenue</div></div><div class='stat-box'><div class='val' style='color:${best.ev>=0?'var(--success)':'var(--danger)'};'>${best.ev.toLocaleString()}</div><div class='lbl'>Expected value</div></div><div class='stat-box'><div class='val'>${best.roi.toFixed(1)}%</div><div class='lbl'>ROI</div></div></div></div>`;
+  html += `<div style='margin-top:12px;'><strong style='font-size:13px;'>All combinations (${combos.length})</strong></div>`;
+  html += `<table><tr><th>#</th><th>Gifts</th><th>Success</th><th>Cost</th><th>EV</th><th>ROI</th></tr>`;
+  combos.slice(0, 20).forEach((c, i) => { html += `<tr style='${i===0?'background:rgba(52,211,153,0.1);':''}'><td>${i+1}</td><td>${c.k} gifts</td><td>${(c.successProb*100).toFixed(1)}%</td><td>${c.craftCost.toLocaleString()}</td><td style='color:${c.ev>=0?'var(--success)':'var(--danger)'};'>${c.ev.toLocaleString()}</td><td>${c.roi.toFixed(1)}%</td></tr>`; });
+  html += `</table>`;
+  if (combos.length > 20) html += `<p style='font-size:11px;color:var(--hint);'>Showing top 20 of ${combos.length}.</p>`;
+  resultsDiv.innerHTML = html; haptic('success');
+}
+function combinations(arr, k) { const result = []; function helper(start, combo) { if (combo.length === k) { result.push([...combo]); return; } for (let i = start; i < arr.length; i++) { combo.push(arr[i]); helper(i + 1, combo); combo.pop(); } } helper(0, []); return result; }
+newScenario(null); applyLang();
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(() => {}); }
 </script>
 </body>
 </html>
-HTMLEOF
-echo "written"
