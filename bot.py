@@ -13,7 +13,7 @@ import time
 import urllib.request
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "PASTE_YOUR_BOT_TOKEN_HERE")
-MINIAPP_URL = os.environ.get("MINIAPP_URL", "https://YOUR-HOSTED-URL/miniapp.html")
+MINIAPP_URL = os.environ.get("MINIAPP_URL", "https://dockfixlabs.github.io/gift-crafting-optimizer/miniapp.html")
 API = "https://api.telegram.org/bot" + BOT_TOKEN
 
 HELP_TEXT = (
