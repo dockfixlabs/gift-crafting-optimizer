@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gift Crafting Optimizer</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="description" content="Telegram Star Gifts crafting probability calculator based on documented rules. No login, no trading.">
+<meta property="og:title" content="Gift Crafting Optimizer">
+<meta property="og:description" content="Compute crafting success and attribute persistence for Telegram Star Gifts.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0d1117">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root { --bg: var(--tg-theme-bg-color, #0d1117); --card: var(--tg-theme-secondary-bg-color, #161b22); --text: var(--tg-theme-text-color, #e6edf3); --hint: var(--tg-theme-hint-color, #8b949e); --accent: var(--tg-theme-button-color, #4f8cff); --accent-text: var(--tg-theme-button-text-color, #ffffff); --border: #30363d; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+  .container { max-width: 960px; margin: 0 auto; padding: 16px; }
+  header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  h1 { margin: 0; font-size: 22px; }
+  .subtitle { color: var(--hint); font-size: 13px; }
+  .tabs { display: flex; gap: 6px; margin: 12px 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .tab { padding: 6px 12px; border-radius: 6px; cursor: pointer; background: transparent; color: var(--hint); border: 1px solid transparent; font-size: 13px; }
+  .tab.active { background: var(--card); color: var(--text); border-color: var(--border); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 12px 0; }
+  .warn { background: #2a1f0f; border: 1px solid #7a5a1f; color: #f0c070; padding: 10px 12px; border-radius: 8px; font-size: 13px; margin: 12px 0; }
+  label { display: block; font-size: 12px; color: var(--hint); margin: 8px 0 3px; }
+  input, textarea, select { width: 100%; padding: 8px 10px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; }
+  textarea { min-height: 64px; font-family: "SF Mono", Consolas, monospace; font-size: 12px; }
+  button { padding: 8px 16px; border: none; border-radius: 6px; background: var(--accent); color: var(--accent-text); cursor: pointer; font-size: 13px; font-weight: 600; }
+  button.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+  button.danger { background: #8b2a2a; color: #fff; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .input-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin: 8px 0; }
+  .result { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 10px; }
+  .prob-big { font-size: 28px; font-weight: 700; color: var(--accent); }
+  .stat { display: inline-block; margin-right: 16px; }
+  .stat .val { font-size: 18px; font-weight: 700; }
+  .stat .lbl { font-size: 11px; color: var(--hint); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; }
+  th { background: var(--card); }
+  .err { color: #ff6b6b; font-size: 12px; margin-top: 4px; }
+  .note { font-size: 11px; color: var(--hint); margin-top: 4px; }
+  .methodology h3 { margin: 12px 0 4px; font-size: 14px; }
+  .methodology code { background: var(--card); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  .preset { display: inline-block; padding: 4px 10px; margin: 3px; border-radius: 6px; background: var(--card); border: 1px solid var(--border); cursor: pointer; font-size: 12px; }
+  .preset:hover { border-color: var(--accent); }
+  .scenario-card { border-left: 3px solid var(--accent); }
+  @media (max-width: 600px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <h1>Gift Crafting Optimizer</h1>
+      <div class="subtitle">Telegram Star Gifts — crafting probability calculator (documented rules)</div>
+    </div>
+    <div class="note">v1.0 · no login · no trading</div>
+  </header>
+
+  <div class="warn">
+    <strong>Disclaimer:</strong> Probabilities are mathematical estimates based on documented Telegram rules.
+    They do NOT guarantee a specific outcome, profit, or market value. Inputs are user-provided.
+    This tool does not execute crafts or trades.
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="calc">Calculator</div>
+    <div class="tab" data-tab="market">Market Context</div>
+    <div class="tab" data-tab="method">Methodology</div>
+  </div>
+
+  <div id="calc" class="panel active">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;">
+        <strong>Scenarios</strong>
+        <div>
+          <button class="secondary" id="addScenario">+ Add scenario</button>
+          <button id="calcAll">Calculate all</button>
+          <button class="secondary" id="exportResults">Export results</button>
+        </div>
+      </div>
+      <div class="note">Presets:</div>
+      <div>
+        <span class="preset" data-preset="official">Official example (3 gifts)</span>
+        <span class="preset" data-preset="two">2 gifts, 50/50</span>
+        <span class="preset" data-preset="four">4 gifts, max chance</span>
+      </div>
+      <div id="scenarios"></div>
+      <div id="results"></div>
+    </div>
+  </div>
+
+  <div id="market" class="panel">
+    <div class="card">
+      <strong>Static market sample</strong>
+      <p class="note">Source: Fragment.com public pages (Oct 2026). 59 recent sold prices, unit = Gram (TON). NOT live, NOT Stars. No KYC bypass.</p>
+      <div id="marketStats"></div>
+      <div class="note" style="margin-top:8px;">Price distribution (sorted):</div>
+      <div id="priceList" style="font-size:11px; color:var(--hint); max-height:120px; overflow:auto;"></div>
+    </div>
+    <div class="card">
+      <strong>Fee impact calculator</strong>
+      <p class="note">Test whether a price gap survives fees. All values in the same currency unit.</p>
+      <div class="grid3">
+        <div><label>Buy price</label><input type="number" id="feeBuy" value="10000"></div>
+        <div><label>Sell price</label><input type="number" id="feeSell" value="11000"></div>
+        <div><label>Gas / fixed cost</label><input type="number" id="feeGas" value="1"></div>
+      </div>
+      <div class="grid2">
+        <div><label>Buy fee %</label><input type="number" id="feeBuyPct" value="0"></div>
+        <div><label>Sell fee %</label><input type="number" id="feeSellPct" value="5"></div>
+      </div>
+      <button style="margin-top:8px;" onclick="calcFee()">Calculate fee impact</button>
+      <div id="feeResult" class="result" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div id="method" class="panel">
+    <div class="card methodology">
+      <h3>Crafting success</h3>
+      <p>success_rate = sum(craft_chance_permille) of 1-4 inputs (permille). UI % = floor((sum + 5) / 10), clamped 0-100. Probability = min(sum/1000, 1.0). All inputs are burned on attempt.</p>
+      <h3>Attribute persistence</h3>
+      <p>Use stargifts_craft_attribute_permilles (client config): array of 4 rows; row N has N+1 integers (permille). For k inputs, use row k-1. Group pattern/backdrop attributes by ID; for a group of size m, persistence = row[m-1] / 1000.</p>
+      <h3>Key distinction</h3>
+      <p>craft_chance_permille = per-gift success contribution. stargifts_craft_attribute_permilles = attribute persistence config. These are different fields and are not conflated.</p>
+      <h3>Data access</h3>
+      <p>Bot API has NO gift-craft methods. MTProto (user session) provides craft fields. This tool runs client-side on user-provided data only.</p>
+      <h3>Sources</h3>
+      <ul>
+        <li>core.telegram.org/api/gifts (crafting section)</li>
+        <li>payments.craftStarGift, getCraftStarGifts, getResaleStarGifts</li>
+        <li>Telegram blog: Gift Crafting (Android redesign release)</li>
+      </ul>
+      <h3>Limitations</h3>
+      <ul>
+        <li>Does not predict which specific attribute is chosen on success (random among candidates).</li>
+        <li>Does not estimate future market value.</li>
+        <li>Config values are user-provided, not verified against live client.</li>
+        <li>Market sample is a static snapshot, not live.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:16px; text-align:center;">
+    Gift Crafting Optimizer · evidence-based · no hype · no trading
+  </div>
+</div>
+
+<script src="gift_calc.js"></script>
+<script>
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) { try { tg.ready(); tg.expand(); } catch(e) {} }
+
+document.querySelectorAll(".tab").forEach(t => {
+  t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById(t.dataset.tab).classList.add("active");
+  });
+});
+
+const PRESETS = {
+  official: { base: 1, count: 3, inputs: [
+    { permille: 100, patterns: "", backdrops: "green" },
+    { permille: 100, patterns: "", backdrops: "green" },
+    { permille: 100, patterns: "", backdrops: "black" }
+  ], config: [[100],[100,200],[60,180,450],[100,200,300,400]] },
+  two: { base: 1, count: 2, inputs: [
+    { permille: 250, patterns: "42,42", backdrops: "red,red" },
+    { permille: 250, patterns: "", backdrops: "red" }
+  ], config: [[100],[100,200],[60,180,450],[100,200,300,400]] },
+  four: { base: 1, count: 4, inputs: [
+    { permille: 250, patterns: "", backdrops: "" },
+    { permille: 250, patterns: "", backdrops: "" },
+    { permille: 250, patterns: "", backdrops: "" },
+    { permille: 250, patterns: "", backdrops: "" }
+  ], config: [[100],[100,200],[60,180,450],[100,200,300,400]] }
+};
+
+document.querySelectorAll(".preset").forEach(p => {
+  p.addEventListener("click", () => applyPreset(p.dataset.preset));
+});
+
+function applyPreset(name) {
+  const pr = PRESETS[name];
+  if (!pr) return;
+  // ensure at least one scenario
+  if (document.querySelectorAll(".scenario-card").length === 0) newScenario(null);
+  const card = document.querySelector(".scenario-card");
+  card.querySelector(".base").value = pr.base;
+  card.querySelector(".count").value = pr.count;
+  card.querySelector(".config").value = JSON.stringify(pr.config);
+  renderScenarioInputs(card.id);
+  const rows = card.querySelectorAll(".input-block");
+  rows.forEach((r, i) => {
+    const inp = pr.inputs[i];
+    r.querySelector(".permille").value = inp.permille;
+    r.querySelector(".patterns").value = inp.patterns;
+    r.querySelector(".backdrops").value = inp.backdrops;
+  });
+}
+
+let scenarioCount = 0;
+function newScenario(prefill) {
+  scenarioCount++;
+  const id = "sc" + scenarioCount;
+  const div = document.createElement("div");
+  div.className = "card scenario-card";
+  div.id = id;
+  div.innerHTML = `
+    <div class="row" style="justify-content:space-between;">
+      <strong>Scenario ${scenarioCount}</strong>
+      <button class="danger" onclick="removeScenario('${id}')">Remove</button>
+    </div>
+    <div class="grid2">
+      <div><label>Base gift ID</label><input type="number" class="base" value="${prefill?prefill.base:1}" min="1"></div>
+      <div><label>Inputs (1-4)</label><select class="count" onchange="renderScenarioInputs('${id}')">
+        <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option>
+      </select></div>
+    </div>
+    <label>Craft attribute permilles config (JSON)</label>
+    <textarea class="config">${prefill?JSON.stringify(prefill.config):"[[100],[100,200],[60,180,450],[100,200,300,400]]"}</textarea>
+    <div class="inputs"></div>
+  `;
+  document.getElementById("scenarios").appendChild(div);
+  if (prefill) document.getElementById(id).querySelector(".count").value = prefill.count;
+  renderScenarioInputs(id);
+  if (prefill) {
+    const rows = document.getElementById(id).querySelectorAll(".input-block");
+    rows.forEach((r, i) => {
+      r.querySelector(".permille").value = prefill.inputs[i].permille;
+      r.querySelector(".patterns").value = prefill.inputs[i].patterns;
+      r.querySelector(".backdrops").value = prefill.inputs[i].backdrops;
+    });
+  }
+}
+
+function removeScenario(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function renderScenarioInputs(id) {
+  const card = document.getElementById(id);
+  const n = parseInt(card.querySelector(".count").value);
+  const container = card.querySelector(".inputs");
+  container.innerHTML = "";
+  for (let i = 0; i < n; i++) {
+    const block = document.createElement("div");
+    block.className = "input-block";
+    block.innerHTML = `
+      <div class="note">Input ${i+1}</div>
+      <div class="grid3">
+        <div><label>Permille (0-1000)</label><input type="number" class="permille" value="250" min="0" max="1000"></div>
+        <div><label>Pattern IDs (comma)</label><input type="text" class="patterns" placeholder="e.g. 42,42"></div>
+        <div><label>Backdrop IDs (comma)</label><input type="text" class="backdrops" placeholder="e.g. red,red"></div>
+      </div>
+    `;
+    container.appendChild(block);
+  }
+}
+
+function collectScenario(card) {
+  const base = parseInt(card.querySelector(".base").value);
+  const config = JSON.parse(card.querySelector(".config").value);
+  const rows = card.querySelectorAll(".input-block");
+  const inputs = [];
+  rows.forEach((r, idx) => {
+    const permille = parseInt(r.querySelector(".permille").value);
+    const patterns = r.querySelector(".patterns").value.trim().split(",").map(s=>s.trim()).filter(Boolean);
+    const backdrops = r.querySelector(".backdrops").value.trim().split(",").map(s=>s.trim()).filter(Boolean);
+    const attrs = [];
+    patterns.forEach(p => attrs.push({type:"pattern", id: p}));
+    backdrops.forEach(b => attrs.push({type:"backdrop", id: b}));
+    inputs.push({ unique_id: "g"+(idx+1), base_gift_id: base, craft_chance_permille: permille, attributes: attrs });
+  });
+  return { base_gift_id: base, inputs, config };
+}
+
+function calculateAll() {
+  const cards = document.querySelectorAll(".scenario-card");
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "";
+  if (cards.length === 0) {
+    resultsDiv.innerHTML = "<div class='err'>No scenarios. Add one.</div>";
+    return;
+  }
+  cards.forEach(card => {
+    let out;
+    try {
+      const sc = collectScenario(card);
+      out = expectedDistribution(sc.inputs, sc.config);
+    } catch (e) {
+      const d = document.createElement("div");
+      d.className = "result";
+      d.innerHTML = "<div class='err'>" + card.id + ": " + e.message + "</div>";
+      resultsDiv.appendChild(d);
+      return;
+    }
+    const attrRows = [];
+    for (const type of ["pattern","backdrop"]) {
+      const groups = out.attribute_groups[type] || {};
+      const probs = out.attribute_persistence[type] || {};
+      for (const key of Object.keys(groups)) {
+        attrRows.push("<tr><td>" + type + "</td><td>" + key + "</td><td>" + groups[key] + "</td><td>" + (probs[key]*100).toFixed(1) + "%</td></tr>");
+      }
+    }
+    const attrTable = attrRows.length
+      ? "<table><tr><th>Type</th><th>ID</th><th>Count</th><th>Persistence</th></tr>" + attrRows.join("") + "</table>"
+      : "<p class='note'>No attributes provided.</p>";
+    const d = document.createElement("div");
+    d.className = "result";
+    d.innerHTML = `
+      <div style="font-weight:700; margin-bottom:4px;">${card.id}</div>
+      <div>Inputs: ${out.inputs_count} · Total craft chance: ${out.total_permille} permille</div>
+      <div>Success probability: <span class="prob-big">${(out.success_probability*100).toFixed(1)}%</span> (UI: ${out.ui_percentage}%)</div>
+      <div class="note">Inputs burned on attempt (success or fail).</div>
+      ${attrTable}
+      <div class="note">${out.limitations.join(" ")}</div>
+    `;
+    resultsDiv.appendChild(d);
+  });
+}
+
+document.getElementById("addScenario").addEventListener("click", () => newScenario(null));
+document.getElementById("calcAll").addEventListener("click", calculateAll);
+document.getElementById("exportResults").addEventListener("click", exportResults);
+
+function exportResults() {
+  const resultsDiv = document.getElementById("results");
+  if (!resultsDiv || !resultsDiv.innerText.trim()) {
+    alert("No results to export. Calculate first.");
+    return;
+  }
+  const cards = document.querySelectorAll(".scenario-card");
+  const data = [];
+  cards.forEach(card => {
+    try {
+      const sc = collectScenario(card);
+      const out = expectedDistribution(sc.inputs, sc.config);
+      data.push({ scenario: card.id, ...out });
+    } catch (e) { /* skip invalid */ }
+  });
+  const json = JSON.stringify(data, null, 2);
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(json).then(() => alert("Results copied to clipboard as JSON.")).catch(() => fallbackCopy(json));
+  } else {
+    fallbackCopy(json);
+  }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); alert("Results copied to clipboard as JSON."); }
+  catch (e) { alert("Copy failed. See console."); console.log(text); }
+  document.body.removeChild(ta);
+}
+
+const SAMPLE_PRICES = [88888,50000,48000,42000,30000,28555,23519,20888,20000,19999,19000,15000,15000,15000,14400,13999,13588,13500,13500,13500,13337,13000,13000,12990,12500,12500,12388,12345,12345,12000,12000,11999,11888,11660,11111,11111,11111,11111,11111,11100,10700,10449,10106,10000,10000,10000,10000,9999,9999,9999,9900,9900,8999,8888,8888,8300,8200,8088,8000];
+const ms = marketStats(SAMPLE_PRICES);
+document.getElementById("marketStats").innerHTML = `
+  <div class="stat"><div class="val">${ms.count}</div><div class="lbl">samples</div></div>
+  <div class="stat"><div class="val">${ms.min.toLocaleString()}</div><div class="lbl">min (Gram)</div></div>
+  <div class="stat"><div class="val">${ms.max.toLocaleString()}</div><div class="lbl">max (Gram)</div></div>
+  <div class="stat"><div class="val">${ms.median.toLocaleString()}</div><div class="lbl">median (Gram)</div></div>
+  <div class="stat"><div class="val">${ms.mean.toLocaleString()}</div><div class="lbl">mean (Gram)</div></div>
+`;
+document.getElementById("priceList").textContent = SAMPLE_PRICES.slice().sort((a,b)=>a-b).join(", ");
+
+function calcFee() {
+  try {
+    const r = computeFeeImpact(
+      parseFloat(document.getElementById("feeBuy").value),
+      parseFloat(document.getElementById("feeSell").value),
+      parseFloat(document.getElementById("feeBuyPct").value),
+      parseFloat(document.getElementById("feeSellPct").value),
+      parseFloat(document.getElementById("feeGas").value)
+    );
+    const el = document.getElementById("feeResult");
+    el.style.display = "block";
+    el.innerHTML = `
+      <div>Buy cost: ${r.buy_cost} · Sell net: ${r.sell_net}</div>
+      <div>Net profit: <span class="prob-big" style="font-size:18px; color:${r.profitable?'#3fb950':'#ff6b6b'};">${r.net_profit}</span></div>
+      <div>ROI: ${r.roi_percent}% · ${r.profitable ? "PROFITABLE" : "NOT PROFITABLE"}</div>
+    `;
+  } catch (e) {
+    const el = document.getElementById("feeResult");
+    el.style.display = "block";
+    el.innerHTML = "<div class='err'>" + e.message + "</div>";
+  }
+}
+
+newScenario(null);
+</script>
+</body>
+</html>
+HTMLEOF
+echo "written"
